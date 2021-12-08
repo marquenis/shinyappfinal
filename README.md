@@ -3,8 +3,8 @@
 Hello and welcome to my github repository which houses my mosquito body analysis
 shiny app. 
 
-I chose option B - my own shiny app, which can be accessed on this link: 
-https://marquenis.shinyapps.io/shiny-marquenis/
+This assignment is a continuation of my previous shiny APP: 
+
 
 ### Repository contents
 
