@@ -13,7 +13,6 @@ In this repository, I have
 2. An app.R file which contains the script for the shiny app.
 3. A togoi.csv file which contains the data used for the analyses.
 4. The shiny-marquenis.Rproj file.
-5. An rsconnect folder.
 
 ### Data explanation
 This app is unique because it provides an easy user-interface where you can 
@@ -32,5 +31,7 @@ or 2) decreasing nutrition levels.
 The 5 treatments in this experiment are 24C medium nutrition, 24C high 
 nutrition, 24C low nutrition, 30C medium nutrition, and 18C medium nutrition. 
 
-
-Please, enjoy my shiny app!
+#### Data acknowledgement
+This data was collected during the summer of 2020 by a work-learn student, 
+Ernest Liang. Both Ernest and I are now working together to analyze and 
+publish our findings. 
