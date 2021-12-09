@@ -3,8 +3,10 @@
 Hello and welcome to my github repository which houses my mosquito body analysis
 shiny app. 
 
-This assignment is a continuation of my previous shiny APP: 
-
+This respository contains the final assignment for STAT545B. I chose Option C 
+for this assignment, and it is a continuation of my previous shiny app. The 
+new shiny app can be accessed through this link:
+_________
 
 ### Repository contents
 
