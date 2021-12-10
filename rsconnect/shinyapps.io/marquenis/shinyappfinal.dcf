@@ -1,0 +1,13 @@
+name: shinyappfinal
+title: shinyappfinal
+username:
+account: marquenis
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5307613
+bundleId: 5357416
+url: https://marquenis.shinyapps.io/shinyappfinal/
+when: 1639173625.21921
+lastSyncTime: 1639173625.21923
+asMultiple: FALSE
+asStatic: FALSE
