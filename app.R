@@ -10,9 +10,17 @@ togoi$Larva.tmt <- as.factor(
 togoi$Adult.tmt <- as.factor(
   str_c(togoi$Adult.Temp.C, " ", togoi$Adult.Food))
 
-togoi <- togoi %>%
+togoi.size <- togoi %>%
   filter(wing.length != "NA") %>%
-  select("Larva.tmt", "sex", "wing.length")
+  select("Larva.tmt", "sex", "wing.length") 
+
+togoi.survival <- togoi %>%
+  mutate(status = as.numeric(if_else(died.naturally == "yes","1","0"))) %>%
+  select("Larva.tmt", "sex", "status", "adult.survival.days") 
+
+togoi.survival$adult.survival.days[is.na(togoi$adult.survival.days)] = 31  
+
+
 
 options(shiny.autoreload = TRUE)
 
@@ -36,11 +44,11 @@ ui <- fluidPage(
     sidebarPanel(
       checkboxGroupInput(
         "my_checkbox_larva.tmt", "Select Larva Treatment Type",
-        choices = unique(togoi$Larva.tmt)
+        choices = unique(togoi.size$Larva.tmt)
       ),
       strong("Boxplot sex differentiation"),
       checkboxInput(
-        "sex_checkbox", "Click for sex differentiation", 
+        "sex_checkbox", "Click for plot sex differentiation", 
         value = TRUE),
       tags$br(),
       strong("Summary statistics"),
@@ -51,7 +59,8 @@ ui <- fluidPage(
       tags$br(),
       downloadButton(outputId = "downloadPlot", label = "Download the plot")),
     mainPanel(
-      plotOutput("my_plot")
+      plotOutput("my_plot"),
+      plotOutput("survival_plot")
     )
   )
 )
@@ -64,7 +73,7 @@ server <- function(input, output) {
   #plot into male and female mosquitoes. 
   filtered <- reactive({
     req(input$my_checkbox_larva.tmt)
-    togoi %>%
+    togoi.size %>%
       filter(Larva.tmt == input$my_checkbox_larva.tmt)
   })
   
@@ -86,20 +95,21 @@ server <- function(input, output) {
         geom_jitter(aes(alpha = 0.6), size =3, width = 0.3)+
         geom_boxplot()+
         theme(legend.position = "none")+
+        labs(title = "Mosquito Wing Length")+
         ylab("Wing Length (cm)")+
         xlab("Larval Treatments")
     }
   )
   
-  
   #My third feature is this output table which provides some basic stats 
   #results of the selected mosquito growth treatments.
   output$my_table <- renderTable(
     filtered() %>%
-      group_by(Larva.tmt) %>%
+      group_by(Larva.tmt, sex) %>%
       summarize("Mean (cm)" = mean(wing.length),
                 "Median (cm)" = median(wing.length),
                 "SD (cm)" = sd(wing.length))
+    
   )
   
   output$downloadData <- downloadHandler(
@@ -107,7 +117,7 @@ server <- function(input, output) {
       paste("mosquito_bodysize_data", ".csv", sep="")},
     content = function(file){
       data <- filtered()%>%
-        group_by(Larva.tmt) %>%
+        group_by(Larva.tmt, sex) %>%
         summarize("Mean (cm)" = mean(wing.length),
                   "Median (cm)" = median(wing.length),
                   "SD (cm)" = sd(wing.length))
@@ -120,7 +130,7 @@ server <- function(input, output) {
     content <- function(file){
       png(file)
       
-      mosplot <- if(input$sex_checkbox == TRUE){
+      mosplot.size <- if(input$sex_checkbox == TRUE){
         filtered() %>%
           ggplot(aes(x = Larva.tmt, y = wing.length)) +
           geom_jitter(aes(alpha = 0.6), size =3, width = 0.3)+
@@ -139,7 +149,7 @@ server <- function(input, output) {
           xlab("Larval Treatments")
       }
       
-      print(mosplot)
+      print(mosplot.size)
       
       dev.off()
     },
