@@ -5,18 +5,10 @@ library(tidyverse)
 #Data load and tidy
 togoi <- read_csv(here::here("togoi.csv"))
 
-togoi$Larva.tmt <- as.factor(
-  str_c(togoi$Larva.Temp.C, " ", togoi$Larva.Food))
-togoi$Adult.tmt <- as.factor(
-  str_c(togoi$Adult.Temp.C, " ", togoi$Adult.Food))
-
 togoi <- togoi %>%
-  filter(wing.length != "NA") %>%
-  select("Larva.tmt", "sex", "wing.length", "adult.survival.days") 
-
-togoi$adult.survival.days[is.na(togoi$adult.survival.days)] = 31  
-
-
+  mutate(Larva.tmt = as.factor(str_c(togoi$Larva.Temp.C, " ", togoi$Larva.Food))) %>%
+  select("Larva.tmt", "sex", "wing.length", "adult.survival.days") %>%
+  filter(wing.length != "NA") 
 
 options(shiny.autoreload = TRUE)
 
@@ -29,14 +21,14 @@ ui <- fluidPage(
   "This app will help you compare how different larval growth treatments, 
   through manipulation of temperature and nutrition, affect adult body size and 
   lifespan. Adult lifespan is measured by days. With this app, you can explore
-  larval treatments affect body size, and how ",
-  "The number corresponds to the rearing temperature recorded as degrees 
-  Celsius, and the 'Low', 'Med', 'High', correspond to relative nutrition 
-  levels.",
+  how larval treatments affect body size, and how this may affect the lifespan
+  of the mosquito.",
+  "With the larval treatments, the number corresponds to the rearing temperature 
+  recorded as degrees Celsius, and the 'Low', 'Med', 'High', correspond to 
+  relative nutrition levels.",
   tags$br(),
   tags$br(),
-  "Please start by selecting any of the following treatments below. The checkboxes
-  affect both plots, but the slider only affects the histogram.",
+  "Please start by selecting any of the following treatments below.",
   tags$br(),
   tags$br(),
   sidebarLayout(
@@ -45,12 +37,15 @@ ui <- fluidPage(
         "my_checkbox_larva.tmt", "Select Larva Treatment Type",
         choices = unique(togoi$Larva.tmt)
       ),
-      strong("Boxplot sex differentiation"),
+      strong("Sex differentiation"),
       checkboxInput(
-        "sex_checkbox", "Click for plot sex differentiation", 
+        "sex_checkbox_box", "Click for boxplot sex differentiation", 
+        value = FALSE),
+      checkboxInput(
+        "sex_checkbox_hist", "Click for histogram sex differentiation", 
         value = FALSE),
       sliderInput("wing.length", "Select Mosquito Wing Lengths (cm)", 
-                  min = 2.055, max = 4.071, value = c(2.055, 4.071)),
+                  min = 2, max = 4.1, value = c(2, 4.1)),
       tags$br(),
       tags$br(),
       downloadButton(outputId = "downloadData", 
@@ -66,7 +61,8 @@ ui <- fluidPage(
       column(width = 4, tableOutput("my_table"))),
       tags$br(),
       tags$br(),
-      plotOutput("survival_plot")
+      fluidRow(
+        column(width = 7, plotOutput("survival_plot")))
     )
   )
 )
@@ -78,7 +74,7 @@ server <- function(input, output) {
   filtered <- reactive({
     req(input$my_checkbox_larva.tmt)
     togoi %>%
-      filter(Larva.tmt == input$my_checkbox_larva.tmt)
+      filter(Larva.tmt %in% c(input$my_checkbox_larva.tmt))
   })
   
   #create reactive expression for the lifespan histogram
@@ -86,12 +82,12 @@ server <- function(input, output) {
     req(input$my_checkbox_larva.tmt)
     togoi %>%
       filter(wing.length < input$wing.length[2],
-             wing.length > input$wing.length[1],
-             Larva.tmt == input$my_checkbox_larva.tmt)
+             wing.length > input$wing.length[1]) %>%
+      filter(Larva.tmt %in% c(input$my_checkbox_larva.tmt))
   })
 
   output$my_plot <- renderPlot(
-    if(input$sex_checkbox == TRUE){
+    if(input$sex_checkbox_box == TRUE){
       filtered() %>%
         ggplot(aes(x = Larva.tmt, y = wing.length)) +
         geom_jitter(aes(alpha = 0.6), size =3, width = 0.3)+
@@ -115,44 +111,60 @@ server <- function(input, output) {
   )
 
   output$survival_plot <- renderPlot(
-    if(input$sex_checkbox == TRUE){
+    if(input$sex_checkbox_hist == TRUE){
       filtered.size() %>%
         ggplot(aes(adult.survival.days))+
         geom_histogram()+
-        facet_wrap(vars(sex))+
+        facet_grid(rows = vars(Larva.tmt), cols = vars(sex))+
         xlab("Adult Lifespan (days)")+
         ggtitle("Mosquito Adult Lifespan Histogram")+
         ylab("Number of mosquitoes")+
-        xlim(0,31)
+        xlim(0,32)
     }else{
       filtered.size() %>%
         ggplot(aes(adult.survival.days))+
         geom_histogram()+
         ggtitle("Mosquito Adult Lifespan Histogram")+
+        facet_grid(rows = vars(Larva.tmt))+
         xlab("Adult Lifespan (days)")+
         ylab("Number of mosquitoes")+
-        xlim(0,31)
+        xlim(0,32)
     }
   )
 
-  output$my_table <- renderTable(
+  output$my_table <- renderTable({
+    if(input$sex_checkbox_box == TRUE){
     filtered() %>%
       group_by(Larva.tmt, sex) %>%
       summarize("Mean (cm)" = mean(wing.length),
                 "Median (cm)" = median(wing.length),
                 "SD (cm)" = sd(wing.length))
-    
-  )
+    }else{
+    filtered() %>%
+      group_by(Larva.tmt) %>%
+      summarize("Mean (cm)" = mean(wing.length),
+                "Median (cm)" = median(wing.length),
+                "SD (cm)" = sd(wing.length))
+    }
+  })
   
   output$downloadData <- downloadHandler(
     filename = function() {
       paste("mosquito_bodysize_data", ".csv", sep="")},
     content = function(file){
-      data <- filtered()%>%
-        group_by(Larva.tmt, sex) %>%
-        summarize("Mean (cm)" = mean(wing.length),
-                  "Median (cm)" = median(wing.length),
-                  "SD (cm)" = sd(wing.length))
+      if(input$sex_checkbox_box == TRUE){
+        data <- filtered() %>%
+          group_by(Larva.tmt, sex) %>%
+          summarize("Mean (cm)" = mean(wing.length),
+                    "Median (cm)" = median(wing.length),
+                    "SD (cm)" = sd(wing.length))
+      }else{
+        data <- filtered() %>%
+          group_by(Larva.tmt) %>%
+          summarize("Mean (cm)" = mean(wing.length),
+                    "Median (cm)" = median(wing.length),
+                    "SD (cm)" = sd(wing.length))
+      }
       write.csv(data, file)}
   )
   
@@ -162,7 +174,7 @@ server <- function(input, output) {
     content <- function(file){
       png(file)
       
-      mosplot.size <- if(input$sex_checkbox == TRUE){
+      mosplot.size <- if(input$sex_checkbox_box == TRUE){
         filtered() %>%
           ggplot(aes(x = Larva.tmt, y = wing.length)) +
           geom_jitter(aes(alpha = 0.6), size =3, width = 0.3)+
@@ -196,8 +208,7 @@ server <- function(input, output) {
     content <- function(file){
       png(file)
       
-      mosplot.hist <- if(input$sex_checkbox == TRUE){
-        if(input$sex_checkbox == TRUE){
+      mosplot.hist <- if(input$sex_checkbox_hist == TRUE){
           filtered.size() %>%
             ggplot(aes(adult.survival.days))+
             geom_histogram()+
@@ -205,7 +216,7 @@ server <- function(input, output) {
             xlab("Adult Lifespan (days)")+
             ggtitle("Mosquito Adult Lifespan Histogram")+
             ylab("Number of mosquitoes")+
-            xlim(0,31)
+            xlim(0,32)
         }else{
           filtered.size() %>%
             ggplot(aes(adult.survival.days))+
@@ -213,9 +224,8 @@ server <- function(input, output) {
             ggtitle("Mosquito Adult Lifespan Histogram")+
             xlab("Adult Lifespan (days)")+
             ylab("Number of mosquitoes")+
-            xlim(0,31)
+            xlim(0,32)
         }
-      }
       
       print(mosplot.hist)
       
