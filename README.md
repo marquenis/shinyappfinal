@@ -5,7 +5,10 @@ shiny app.
 
 This respository contains the final assignment for STAT545B. I chose Option C 
 for this assignment, and it is a continuation of my previous shiny app. The 
-new shiny app can be accessed through this link:
+FINAL shiny app can be accessed through this link:
+https://marquenis.shinyapps.io/shinyappfinal/
+
+(Assignment 3 shiny app Link: https://marquenis.shinyapps.io/shiny-marquenis/)
 _________
 
 ### Repository contents
