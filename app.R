@@ -73,12 +73,15 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
+  #create reactive expression for the body size boxplot and 
+  #summary statistics
   filtered <- reactive({
     req(input$my_checkbox_larva.tmt)
     togoi %>%
       filter(Larva.tmt == input$my_checkbox_larva.tmt)
   })
   
+  #create reactive expression for the lifespan histogram
   filtered.size <- reactive({
     req(input$my_checkbox_larva.tmt)
     togoi %>%
