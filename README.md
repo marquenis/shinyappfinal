@@ -15,6 +15,7 @@ In this repository, I have
 2. An app.R file which contains the script for the shiny app.
 3. A togoi.csv file which contains the data used for the analyses.
 4. The shiny-marquenis.Rproj file.
+_________
 
 ### Data explanation
 This app is unique because it provides an easy user-interface where you can 
