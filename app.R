@@ -38,12 +38,16 @@ ui <- fluidPage(
         choices = unique(togoi$Larva.tmt)
       ),
       strong("Sex differentiation"),
+      #These check boxes are my first feature, and they determine which larval
+      #treatments are included in 
       checkboxInput(
         "sex_checkbox_box", "Click for boxplot sex differentiation", 
         value = FALSE),
       checkboxInput(
         "sex_checkbox_hist", "Click for histogram sex differentiation", 
         value = FALSE),
+      #This slider is my second feature, and it determines which group of 
+      #mosquitoes, based on size are included in the histogram
       sliderInput("wing.length", "Select Mosquito Wing Lengths (cm)", 
                   min = 2, max = 4.1, value = c(2, 4.1)),
       tags$br(),
@@ -57,6 +61,7 @@ ui <- fluidPage(
       downloadButton(outputId = "downloadHist",
                      label = "Download the histogram")),
     mainPanel(fluidRow(
+      #Split the main panel to have both the table and the plot
       column(width = 7, plotOutput("my_plot")),
       column(width = 4, tableOutput("my_table"))),
       tags$br(),
@@ -69,7 +74,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
-  #create reactive expression for the body size boxplot and 
+  #This reactive expression is for the body size box plot and 
   #summary statistics
   filtered <- reactive({
     req(input$my_checkbox_larva.tmt)
@@ -77,7 +82,7 @@ server <- function(input, output) {
       filter(Larva.tmt %in% c(input$my_checkbox_larva.tmt))
   })
   
-  #create reactive expression for the lifespan histogram
+  #This reactive expression is for the slider, affecting the lifespan histogram
   filtered.size <- reactive({
     req(input$my_checkbox_larva.tmt)
     togoi %>%
@@ -85,7 +90,9 @@ server <- function(input, output) {
              wing.length > input$wing.length[1]) %>%
       filter(Larva.tmt %in% c(input$my_checkbox_larva.tmt))
   })
-
+  
+  #This boxplot is my 3rd feature, and displays the different body sizes of 
+  #mosquitoes by larval treatment
   output$my_plot <- renderPlot(
     if(input$sex_checkbox_box == TRUE){
       filtered() %>%
@@ -109,7 +116,8 @@ server <- function(input, output) {
         xlab("Larval Treatments")
     }
   )
-
+  
+  #This histogram is my 4th feature, and shows the adult lifespan  
   output$survival_plot <- renderPlot(
     if(input$sex_checkbox_hist == TRUE){
       filtered.size() %>%
@@ -131,7 +139,9 @@ server <- function(input, output) {
         xlim(0,32)
     }
   )
-
+  
+  #This table is my 5th feature, and it provides summary statistics for the 
+  #body sizes by treatment
   output$my_table <- renderTable({
     if(input$sex_checkbox_box == TRUE){
     filtered() %>%
@@ -148,6 +158,7 @@ server <- function(input, output) {
     }
   })
   
+  #My 6th and last feature is the download buttons for plots and the table
   output$downloadData <- downloadHandler(
     filename = function() {
       paste("mosquito_bodysize_data", ".csv", sep="")},
