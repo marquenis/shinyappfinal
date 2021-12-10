@@ -223,7 +223,7 @@ server <- function(input, output) {
           filtered.size() %>%
             ggplot(aes(adult.survival.days))+
             geom_histogram()+
-            facet_wrap(vars(sex))+
+            facet_grid(rows = vars(Larva.tmt), cols = vars(sex))+
             xlab("Adult Lifespan (days)")+
             ggtitle("Mosquito Adult Lifespan Histogram")+
             ylab("Number of mosquitoes")+
@@ -232,6 +232,7 @@ server <- function(input, output) {
           filtered.size() %>%
             ggplot(aes(adult.survival.days))+
             geom_histogram()+
+            facet_grid(rows = vars(Larva.tmt))+
             ggtitle("Mosquito Adult Lifespan Histogram")+
             xlab("Adult Lifespan (days)")+
             ylab("Number of mosquitoes")+
